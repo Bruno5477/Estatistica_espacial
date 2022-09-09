@@ -1,0 +1,186 @@
+---
+title: "rmarkdown themes"
+author: "Dahee Kim"
+output: rmdformats::readthedown
+---
+
+```{r echo=FALSE, warning=FALSE, include=FALSE}
+knitr::opts_chunk$set(message = FALSE,
+                      warning = FALSE,
+                      echo = FALSE,
+                      include = FALSE)
+
+htmltools::img(src = knitr::image_uri("logoUffAzulTransparente.png"), 
+               alt = 'logo', 
+               style = 'position:absolute; top:10px; right:0; padding:5px;width: 150px; height: 80px')
+
+library(pacman)
+p_load(char = c("dplyr", 
+                "sf",
+                "ggplot2",
+                "spdep",
+                "spatialreg",
+                "rgdal",
+                "leaflet",
+                "sp")) 
+
+setwd("~/Etatistica/2021.2/ESTATÍSTICA ESPACIAL I/Desafio 3")
+
+#importando a base
+base <-read.csv2("pneumonia_rj.csv", header = TRUE, encoding="ISO-8859-1", sep = ";", dec = ",")
+base$Cod_muni<- as.character(base$Cod_muni)
+
+# Importando o shapefile
+RJ = st_read(dsn = "shape/RJ_Municipios_2020.shp")
+RJ = left_join(x = RJ, y = base, by = c("NM_MUN" = "Município"))
+RJ <- st_transform(RJ,CRS("+proj=longlat +datum=WGS84 +no_defs"))
+
+```
+
+<div style="text-align: justify">
+
+# Objetivo
+
+  A pneumonia é uma infecção que ocorre nos pulmões e ela pode ser provocada por bactérias, vírus, fungos ou pela inalação de produtos tóxicos. Diferentes do vírus da gripe, que é altamente infectante, os agentes infecciosos da pneumonia não costumam ser transmitidos facilmente. 
+ 
+  No Brasil, apesar taxa de mortalidade da pneumonia esteja em queda (redução de 25,5% entre 1990 e 2015), entre janeiro e agosto de 2018, 417.924 pacientes foram hospitalizados por causa da pneumonia, totalizando gastos totais de mais de R$ 378 milhões com serviços hospitalares.
+ 
+  Nesse presente trabalho foi utilizado uma base de dados com o número de óbitos por pneumonia nos meses de janeira à novembro de 2021, em cada um dos 92 município do Estado do Rio de Janeiro, esse dados foram obtidos atráves do [DATASUS](https://datasus.saude.gov.br/informacoes-de-saude-tabnet). 
+ 
+  Nosso objetivo é de verificar possíveis dependências espaciais ou tendências nos valores observados na taxa de mortalidade de pneumonia por 10.000 mil habitantes. Então serão criados modelos de regressão espacial e não espacial, na regressão espacial o modelo escolhido foi o *CAR* e o de regressão não espacial foi o modelo de regressão linear. Como covariáveis para os modelos foi utilizado o número de respirados presentes em cada município, essas informações também foram obtidas através do [DATASUS](https://datasus.saude.gov.br/informacoes-de-saude-tabnet), já os dados sobre a população de cada município, utilizados para criar a taxa de mortalidade foram obtidos no [IBGE](https://www.ibge.gov.br).
+ 
+# Análises exploratórias {.tabset .tabset-fade .tabset-pills}
+
+  
+  O conjunto de dados utilizado nesse estudo possui 92 observações referentes a cada um dos municípios do Rio de Janeiro, as variáveis presentes nela são apresentadas a seguir:
+  
+* Cod_muni -> Código de cada município;
+* Município -> Nome de cada município;
+* Óbitos -> Número de óbitos por pneumonia ocorridos em cada município do Rio de Janeiro entre janeiro e novembro de 2021;
+* Equipamentos_Existentes -> Número de respiradores de cada município do Rio de Janeiro no ano de 2021;
+* População -> População estimada pelo IBGE para cada município do Rio de Janeiro no ano de 2021;
+* Taxa -> Taxa de mortalidade por pneumonia nos municípios do Rio de Janeiro para cada 10 mil habitantes entre janeiro e novembro de 2021. A taxa foi calculada da seguinte maneira $Taxa = \frac{Óbitos}{População}*10000$.
+
+## Parte 1
+
+  Na **Figura 1** temos o histograma da taixa de mortalidade por pneumonia em cada município do Rio de Janeiro - RJ, nele é possível observar que os dados não parecem seguir uma distribuição normal, porém vamos supor que os dados seguem uma, para que possamos modelar os dados através do método de regressão.
+
+![Figura 1. Histograma da Taxa de mortalidade por pneumonia.](g1.png)
+  
+  Na **Figura 2** temos um gráfico de pontos das variáveis taxa de mortalidade e número de respiradores, a princípio não consiguimos observar uma relação linear muito evidente entre elas, porém é possível notar que o número de respiradores em comparação a taxa de mortalidade referente ao município do Rio de Janeiro parece ser um outlier, ou seja, um valor discrepante.
+  
+![Figura 2. Taxa de mortalidade por pneumonia x número de respiradores.](g2.png)
+
+## Parte 2
+
+  Na **Figura 3** temos um mapa que mostra a taxa de mortalidade em cada um dos 92 municípios do estado do RJ, não parece existir uma tendência espacial nos valores observado, porém nas próximas análises vamos verificar essa suposição.
+
+![Figura 3. Mapa da Taxa de Mortalidade por município do Estado do Rio de Janeiro.](g3.png)
+
+  Na **Figura 4** podemos observar o número de respiradores em todos os municípios do RJ, fica evidente que a observação do município do Rio de Janeiro destoa das outras, o que mostra uma tendência de maior investimento naquele município em relação aos outros.
+  
+![Figura 4. Número de respiradores por município do Estado do Rio de Janeiro.](g4.png)
+
+# Análise geoestatística {.tabset .tabset-fade .tabset-pills}
+
+  Para detectarmos possíveis estruturas espaciais ou tendências nos valores observados, vamos utilizar a análise espacial de dados de Área, primeiro vamos estimar um modelo independente, depois iremos obter uma matriz de vizinhança dos municípios para estimar o Índice de Moran global e o local (LISA), para verificarmos se existe dependência espacial na nossa base de dados, por fim iremos estimar um modelo de regressão espacial através do modelo CAR,  e depois vamos comparar o mesmo com o modelo independente.
+  
+## Regressao não-espacial
+
+  Na regressão não-espacial foi utilizado um modelo de regressão múltipla padrão, sendo sua fórmula a seguinte 
+$$
+Y = X\beta + U
+$$
+
+onde:
+
+* Y é a variável resposta, taxa de mortalidade por pneumonia por município do RJ;
+* X é a da variável independente, número de respiradores por por município do RJ;
+* $\beta$ é o vetor com os coeficientes do modelo.
+* $E[U] = 0$ e $Cov[U]= E[UU']=C$, onde C é a matriz de covariância.
+
+O modelo independente estimado dos nosso dados apresentou as segiuntes estimavas
+
+Coeficientes | Estimativas | P-valor
+------- | -------- | --------
+Intercepto  | 3,269 | <0,001
+N° de respiradores   | -0,0004 | 0,341
+
+Analisando os resultados do nosso modelo estimado podemos observar que a variável número de respiradores não se apresentou significativa para a explicação da taxa de mortalidade por pneumonia nos municípios do RJ no ano de 2021. O $R^2= -0,00094 $ mostra que o modelo não representa bem a variabilidade do dados.
+
+## Regressão Espacial
+
+  Para identificarmos uma possível estrutura de correlação espacial nos dados, vamos calcular os Índices de Moran Global e o local (LISA), mas primeiro temos que construir a matriz de vizinhança dos dados, nesse trabalho usamos a estratégia da proximidade por contiguidade, que consiste em:
+
+* Um objeto está próximo apenas daqueles com os quais compartilha uma fronteira.
+
+$$
+w_{ij} = \left\{
+\begin{array}{ll}
+1 & \hbox{, se i e j são contíguos}, \\
+0 & \hbox{, se i e j não são contíguos}.
+\end{array}
+\right. 
+$$
+A expressão do Índice de Moran global é dada por:
+
+$$
+I = \frac{\sum_{i=1}^n\sum_{j=1}^n w_{ij}(y_i - \bar{y})(y_j - \bar{y})}{\sum_{i=1}^n(y_i - \bar{y})^2\sum_{i=1}^n\sum_{j=1}^n w_{ij}}
+$$
+
+onde:
+
+* n é o número de áreas;
+* $y_i$ é o valor do atributo considerado na área i ;
+* $\bar{y}$ é o valor médio do atributo na região de estudo;
+* $w_{ij}$ são os elementos da matriz normalizada de proximidade espacial.
+
+O Índice de Moran global normalizado segue, assintoticamente, uma distribuição normal sob a hipótese de ausência de dependência espacial. Neste caso, temos que a hipótese nula do teste de significˆancia do Índice de Moran global é de independência espacial, isto é, I = 0.
+
+Para avaliarmos a associações espaciais que possam ser associados às diferentes localizações da nossa base de dados, foi utilizado o índice de Moran Local (LISA), ele é calculado para cada sub-região i da seguinte forma:
+
+$$ 
+I_i = z_i\sum_{i=1}^n w_{ij}z_j
+$$
+
+onde $z_i$ representa o valor padronizado de Y , isto é, com média zero e variância 1.
+
+Para a regressão espacial vamos utilizar o modelo CAR, esse modelo é representado da seguinte forma:
+
+$$
+Y = X\beta + U
+$$
+e podemos escrever o modelo conjunto como
+
+$$
+Y \sim  NMV(X\beta,\Sigma_{CAR})
+$$
+com $\Sigma_{CAR}= \sigma^2(D - \rho W)^{-1}$
+
+Construimos a matriz de vizinhança para podermos calcular o índice de moran global, o teste apresentou p-valor = 0,2656, ou seja, aceitamos a hipótese de que I = 0, então temos evidências de que existe independência espacial nos dados.
+
+Na **Figura 5** temos um mapa com os valores do LISA em cada município, é possível notar algumas correlações espaciais em alguns municípios próximos, principalmente na região mais ao norte do estado do RJ.
+
+![Figura 5. Índice de moran local (LISA) para cada município.](g5.png)
+
+O modelo CAR estimado é apresentado na tabela abaixo, nele podemos notar que o número de respiradores também se mostrou ineficaz para a explicação do modelo, além disso, ele indica que o parâmetro estimado da auto-correlação global do modelo é igual a 0, indicado que não existe uma correlação espacial nos dados.
+
+Coeficientes | Estimativas | P-valor
+------- | -------- | --------
+Intercepto  | 3,253 | <0,001
+N° de respiradores   | -0,0003 | 0,441
+
+Comparando os modelos observamos que o AIC que é uma medidade de qualidade ajuste de modelos, apresentou valor igual à 409,14 no modelo independente e 410,92 no modelo CAR, indicando um ajuste ligeiramente melhor no modelo independente quanto a análise dos resíduos de ambos os modelos a **Figura 6** mostra que os resíduos do modelo CAR parecem ter sido melhor ajustados do que os do independente.
+
+![Figura 6. Residuos CAR vs IND.](g6.png)
+
+# Conclusão {.tabset .tabset-fade .tabset-pills}
+
+O objetivo desse estudo era verificar se a taxa de mortalidade por pneumonia por 10 mil habitantes nos municípios do RJ entre janeiro e novembro de 2021 possui dependência espacial, além disso, buscamos verificar se a mesma era dependente do número de respiradores presentes em cada município, com o auxílio de um histograma verificamos que os dados não pareciam seguir uma normal, ou seja, talvez fosse necessária modelar o modelo com outra distribuição de probabilidade, um Poisson, por exemplo. Analisando o gráfico de pontos da Taxa de mortalidade versus o número de repiradores indica que não parece existir uma relação linear entre os variáveis, a **Figura 3** mostra que o município de Natividade possuia a maior taxa de mortalidade por pneumonia do Estado, e apesar de possuir só 2 respiradores no município, seu número total de óbitos foi de 13. O Município do Rio de Janeiro possui o maior número de respiradores entre todos os municípios do Estado, são mais de 5 mil, tendo sua taxa de mortalidade um pouco menor que 2.
+
+Um modelo independente foi estimado, porém ele se mostrou pouco explicativo em relação aos dados, além de a covariável número de respiradores não ter sido significativa para explicar o modelo.
+
+Na parte de análise espacial, foi verificado através do Índice de Moran global que não existe dependência espacial nos municcípios do Estado do RJ, porém o LISA, indicou que uma dependência local entre os municípios não pode ser descartada. O modelo CAR foi estimado para verificar a dependêcia espacial dos dados, ele constatou que os dados são independentes espacialmente, complemetando a informação do Índice de Moran Global.
+
+Os dados não se mostraram relacionados ao número de respiradores de cada município, o que indica que outras covariáveis devem ser testadas para buscar uma possível relação com a Taxa de Mortalidade por pnuemonia por 10 mil habitantes.
+

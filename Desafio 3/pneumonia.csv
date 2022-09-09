@@ -1,0 +1,100 @@
+ Morbidade Hospitalar do SUS - por local de residência - Rio de Janeiro
+Óbitos por Município
+Lista Morb  CID-10: Pneumonia
+Período:Jan-Nov/2021
+"Município";"Óbitos"
+"330010 Angra dos Reis";80
+"330015 Aperibé";4
+"330020 Araruama";10
+"330022 Areal";5
+"330023 Armação dos Búzios";28
+"330025 Arraial do Cabo";10
+"330030 Barra do Piraí";4
+"330040 Barra Mansa";75
+"330045 Belford Roxo";70
+"330050 Bom Jardim";13
+"330060 Bom Jesus do Itabapoana";21
+"330070 Cabo Frio";22
+"330080 Cachoeiras de Macacu";12
+"330090 Cambuci";11
+"330100 Campos dos Goytacazes";195
+"330110 Cantagalo";8
+"330115 Cardoso Moreira";7
+"330120 Carmo";14
+"330130 Casimiro de Abreu";21
+"330095 Comendador Levy Gasparian";1
+"330140 Conceição de Macabu";9
+"330150 Cordeiro";4
+"330160 Duas Barras";5
+"330170 Duque de Caxias";124
+"330180 Engenheiro Paulo de Frontin";2
+"330185 Guapimirim";18
+"330187 Iguaba Grande";1
+"330190 Itaboraí";72
+"330200 Itaguaí";15
+"330210 Itaocara";13
+"330220 Itaperuna";21
+"330225 Itatiaia";8
+"330227 Japeri";14
+"330240 Macaé";76
+"330245 Macuco";1
+"330250 Magé";34
+"330260 Mangaratiba";8
+"330270 Maricá";45
+"330280 Mendes";11
+"330285 Mesquita";21
+"330290 Miguel Pereira";16
+"330300 Miracema";16
+"330310 Natividade";13
+"330320 Nilópolis";25
+"330330 Niterói";48
+"330340 Nova Friburgo";78
+"330350 Nova Iguaçu";267
+"330360 Paracambi";34
+"330370 Paraíba do Sul";18
+"330380 Paraty";19
+"330385 Paty do Alferes";20
+"330390 Petrópolis";32
+"330395 Pinheiral";6
+"330400 Piraí";13
+"330411 Porto Real";10
+"330412 Quatis";4
+"330414 Queimados";15
+"330415 Quissamã";16
+"330420 Resende";42
+"330430 Rio Bonito";12
+"330440 Rio Claro";9
+"330450 Rio das Flores";6
+"330452 Rio das Ostras";23
+"330455 Rio de Janeiro";1210
+"330460 Santa Maria Madalena";3
+"330470 Santo Antônio de Pádua";10
+"330480 São Fidélis";23
+"330475 São Francisco de Itabapoana";21
+"330490 São Gonçalo";315
+"330500 São João da Barra";26
+"330510 São João de Meriti";49
+"330515 São José do Vale do Rio Preto";3
+"330520 São Pedro da Aldeia";3
+"330530 São Sebastião do Alto";5
+"330540 Sapucaia";5
+"330550 Saquarema";41
+"330555 Seropédica";7
+"330560 Silva Jardim";14
+"330570 Sumidouro";5
+"330575 Tanguá";4
+"330580 Teresópolis";16
+"330590 Trajano de Moraes";8
+"330600 Três Rios";6
+"330610 Valença";31
+"330615 Varre-Sai";3
+"330620 Vassouras";13
+"330630 Volta Redonda";107
+"Total";3783
+ Fonte: Ministério da Saúde - Sistema de Informações Hospitalares do SUS (SIH/SUS)
+ Notas:
+ 
+ Situação da base de dados nacional em 29/04/2016.
+ Dados de janeiro de 2015 até março de 2016 sujeitos a retificação.
+ 
+ Consulte o site da Secretaria Estadual de Saúde para mais informações.
